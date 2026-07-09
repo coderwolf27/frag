@@ -16,8 +16,8 @@ if sys.platform == 'win32':
         pass
 
 # Configuration
-BOT_TOKEN = "8356745278:AAF98uvlJGmLPFnNk5hxxxxxxxxxHE"
-CHAT_ID = "5393060599"
+BOT_TOKEN = "8660418461:AAEhuCdhtvp9FpLwzm_aULyIRzYIbrE1OFU"
+CHAT_ID = "1899208318"
 
 
 
