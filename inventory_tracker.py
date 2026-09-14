@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import glob
 import os
 import aiohttp
@@ -34,12 +34,26 @@ async def check_account(session_file):
     try:
         await client.start(max_attempts=3)
     except Exception as e:
-        print(f"\n❌ Login failed (Wrong password 3 times or invalid session): {e}")
-        await client.disconnect()
-        session_path = f"{session_file}.session"
-        if os.path.exists(session_path):
-            os.remove(session_path)
-            print(f"🗑️ Removed broken session file: {session_path}")
+        error_msg = str(e).lower()
+        if "database is locked" in error_msg:
+            print(f"\n⚠️ SESSION LOCKED: '{session_file}' is currently being used by another running script (like PM2 or your checker).")
+            print(f"   You must stop the other script if you want to scan this account. Skipping...")
+        else:
+            print(f"\n❌ Login failed (Wrong password or invalid session): {e}")
+            session_path = f"{session_file}.session"
+            if os.path.exists(session_path):
+                try:
+                    os.remove(session_path)
+                    print(f"🗑️ Removed broken session file: {session_path}")
+                except:
+                    pass
+                    
+        # Safely attempt disconnect without crashing if DB is locked
+        try:
+            await client.disconnect()
+        except Exception:
+            pass
+            
         return
 
     me = await client.get_me()
