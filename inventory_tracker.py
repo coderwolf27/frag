@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import glob
 import os
 import aiohttp
@@ -30,7 +30,18 @@ async def is_on_auction(username):
 
 async def check_account(session_file):
     client = TelegramClient(session_file, API_ID, API_HASH)
-    await client.start()
+    try:
+        # This gives exactly 3 chances for the 2FA password/code
+        await client.start(max_attempts=3)
+    except Exception as e:
+        print(f"\n❌ Login failed (Wrong password 3 times or invalid session): {e}")
+        await client.disconnect()
+        session_path = f"{session_file}.session"
+        if os.path.exists(session_path):
+            os.remove(session_path)
+            print(f"🗑️ Removed broken session file: {session_path}")
+        return
+
     me = await client.get_me()
     
     while True:
