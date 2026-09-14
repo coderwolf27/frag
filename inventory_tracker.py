@@ -1,10 +1,11 @@
-import asyncio
+﻿import asyncio
 import glob
 import os
 import aiohttp
 import sys
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetAdminedPublicChannelsRequest
+from telethon.tl.functions.account import UpdateProfileRequest
 
 if sys.platform == 'win32':
     try:
@@ -31,7 +32,6 @@ async def is_on_auction(username):
 async def check_account(session_file):
     client = TelegramClient(session_file, API_ID, API_HASH)
     try:
-        # This gives exactly 3 chances for the 2FA password/code
         await client.start(max_attempts=3)
     except Exception as e:
         print(f"\n❌ Login failed (Wrong password 3 times or invalid session): {e}")
@@ -58,6 +58,20 @@ async def check_account(session_file):
                 
         print(f"Total public channel slots used: {len(public_usernames)}/10")
         
+        # Tag full accounts visually
+        if len(public_usernames) >= 10:
+            current_name = me.first_name or ""
+            current_last = me.last_name or ""
+            if "❤️" not in current_name and "❤️" not in current_last:
+                try:
+                    new_first_name = current_name + " ❤️"
+                    await client(UpdateProfileRequest(first_name=new_first_name))
+                    print(f"  ❤️ Account is FULL! Automatically added ❤️ to Telegram profile name.")
+                    # Update local 'me' object so we don't spam it next loop
+                    me.first_name = new_first_name
+                except Exception as e:
+                    print(f"  ⚠️ Could not update profile name: {e}")
+                    
         idle_usernames = []
         if public_usernames:
             print("\nChecking Fragment status for owned names...")
@@ -84,7 +98,6 @@ async def check_account(session_file):
     
     await client.disconnect()
     
-    # Delete the session file
     session_path = f"{session_file}.session"
     if os.path.exists(session_path):
         try:
